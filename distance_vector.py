@@ -17,6 +17,7 @@ class Simulation:
         switches = {}
         for i in range(n):
             switches[i+1] = Switch(i+1,links,hosts)
+        return switches
 
     def step(self,t):
         #plan order of simulation steps here

@@ -16,7 +16,7 @@ class Simulation:
     def create_switches(n,links,hosts):
         switches = {}
         for i in range(n):
-            switches[i+1] = Switch(i+1,links,hosts)
+            switches[i] = Switch(i,links,hosts)
         return switches
 
     def step(self,t):
@@ -30,8 +30,8 @@ class NetworkState:
 class Switch:
     def __init__(self,num,links,hosts):
         self._num = num
-        self._links = links[num-1]
-        self._hosts = hosts[num-1]
+        self._links = links[num]
+        self._hosts = hosts[num]
         self._fwdtable = []
 
 def main():

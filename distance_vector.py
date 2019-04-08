@@ -26,9 +26,9 @@ class Simulation:
             if self._switches[switch]._updated:
                 for num in self._switches[switch]._links:
                     if num in self._sentvectors:
-                        self._sentvectors[num].append(copy.deepcopy(self._switches[switch]._vector))
+                        self._sentvectors[num].append(copy.deepcopy(self._switches[switch]._vector)) #need to deepcopy to avoid passing a reference to switch classes vector
                     else:
-                        self._sentvectors[num] = [copy.deepcopy(self._switches[switch]._vector)]
+                        self._sentvectors[num] = [copy.deepcopy(self._switches[switch]._vector)] #need to deepcopy to avoid passing a reference to switch classes vector
             self._switches[switch]._updated = False
 
     def recv_vectors(self):
@@ -58,8 +58,6 @@ class Switch:
 
     def update_vector(self, vector):
         #should process and update vector, should set updated if there was an update
-        #print("Before update for Switch "+str(self._num)+": "+str(self._vector))
-        #print("Vector handed to switch: "+str(vector))
         for num in vector:
             if num not in self._vector:
                 self._vector[num] = vector[num]+1
@@ -67,7 +65,6 @@ class Switch:
             elif self._vector[num] > vector[num]+1:
                 self._vector[num] = vector[num]+1
                 self._updated = True
-        #print("After update " +str(self._vector))
         return
 
 class NetworkState:

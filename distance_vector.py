@@ -4,6 +4,7 @@ from argparse import ArgumentParser #look at proj02 for help using this
 import os
 import sys
 import time
+import copy
 import bisect #not sure we need this one
 
 class Simulation:
@@ -25,15 +26,14 @@ class Simulation:
             if self._switches[switch]._updated:
                 for num in self._switches[switch]._links:
                     if num in self._sentvectors:
-                        self._sentvectors[num].append(self._switches[switch]._vector)
+                        self._sentvectors[num].append(copy.deepcopy(self._switches[switch]._vector))
                     else:
-                        self._sentvectors[num] = [self._switches[switch]._vector]
+                        self._sentvectors[num] = [copy.deepcopy(self._switches[switch]._vector)]
             self._switches[switch]._updated = False
 
     def recv_vectors(self):
         for num in self._recvectors:
             for vector in self._recvectors[num]:
-                    print("Self._recvectors = " +str(self._recvectors))
                     self._switches[num].update_vector(vector)
         self._recvectors.clear()
 
@@ -58,16 +58,16 @@ class Switch:
 
     def update_vector(self, vector):
         #should process and update vector, should set updated if there was an update
-        print("Before update for Switch "+str(self._num)+": "+str(self._vector))
-        print("Vector handed to switch: "+str(vector))
-        for switch in vector:
-            if switch not in self._vector:
-                self._vector[switch] = vector[switch]+1
+        #print("Before update for Switch "+str(self._num)+": "+str(self._vector))
+        #print("Vector handed to switch: "+str(vector))
+        for num in vector:
+            if num not in self._vector:
+                self._vector[num] = vector[num]+1
                 self._updated = True
-            elif self._vector[switch] > vector[switch]+1:
-                self._vector[switch] = vector[switch]+1
+            elif self._vector[num] > vector[num]+1:
+                self._vector[num] = vector[num]+1
                 self._updated = True
-        print("After update " +str(self._vector))
+        #print("After update " +str(self._vector))
         return
 
 class NetworkState:
@@ -105,7 +105,7 @@ def main():
     arg_parser.add_argument('--switches', dest='switches', action='store',
             type=int, default=7, help='Number of switches in network')
     arg_parser.add_argument('--links', dest='links', action='store',
-            type=list, default=[[1,2],[0,2,4],[0,1,3],[2,4,5],[1,4,6],[4,5],[4,6]], help='2D list of switch connections') #defaults
+            type=list, default=[[1,2],[0,2,4],[0,1,3],[2,4,6],[1,3,5],[4,6],[3,5]], help='2D list of switch connections') #defaults
     arg_parser.add_argument('--steps', dest='steps', action='store',
             type=int, default=10, help="How many time steps to simulate")
     settings = arg_parser.parse_args()

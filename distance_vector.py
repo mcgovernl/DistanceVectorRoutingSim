@@ -6,6 +6,13 @@ import sys
 import time
 import copy
 import bisect #not sure we need this one
+import plotly
+import plotly.plotly as py
+import plotly.graph_objs as go
+
+import networkx as nx
+
+#py = plotly.plotly("SammyButts", "xWKnYKgB6AiZiZ7U9Ql1") used for plotting online
 
 class Simulation:
     def __init__(self,settings):
@@ -101,6 +108,14 @@ class NetworkState:
                     output += "Switch " + str(num) + " has a cost of " + str(vector[num]) + "\n"
         print(output)
 
+def create_graph(settings,state):
+    #creates a graph from a network state object
+    G = nx.Graph()
+    for (num,switch) in state._switches.items():
+        G.add_node(switch)
+        for snum in switch._links:
+            G.add_edge(num,snum)
+    return G
 
 def main():
     # Parse arguments
@@ -122,6 +137,7 @@ def main():
     for t in range(settings.steps):
         state = simulation.step(t)
         state.display()
+        G = create_graph(settings,state)
 
 if __name__ == '__main__':
     main()

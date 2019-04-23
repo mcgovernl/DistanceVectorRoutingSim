@@ -79,6 +79,13 @@ class Switch:
                 self._updated = True
         return
 
+    def vector_str(self):
+        #take the vector and turn it into a nicely formated form for veiwing
+        s = "Vector for Switch "+str(self._num)+"\n| Sequence Number | Distance |\n"
+        for num in self._vector:
+            s += "| "+ str(num) + " | " + str(self._vector[num]) + " |\n"
+        return s
+
 class NetworkState:
     def __init__(self,t,switches,sentvectors,recvectors):
         self._switches = switches
@@ -111,9 +118,9 @@ def create_graph(settings,state):
     #creates a graph from a network state object
     G = nx.Graph()
     for num,switch in state._switches.items():
-        G.add_node(switch, pos=(num ,num % 2)) #need to set node pos to create traces, setting randomly for time being
+        G.add_node(switch, pos=(num ,num % 2)) #need to set node pos to create traces, need some way to standardize node placement
         for snum in switch._links:
-            G.add_edge(switch,state._switches[snum]) #adds nodes improperly
+            G.add_edge(switch,state._switches[snum])
     return G
 
 def create_edge_trace(G):
@@ -123,6 +130,7 @@ def create_edge_trace(G):
         line=dict(width=1,color='#888'),
         hoverinfo='none',
         mode='lines')
+
     for edge in G.edges():
         #dont understand how this works
         x0, y0 = G.node[edge[0]]['pos']
@@ -133,14 +141,45 @@ def create_edge_trace(G):
     return edge_trace
 
 def create_node_trace(G):
-    node_trace = go.Scatter()
+    node_trace = go.Scatter(
+    x=[],
+    y=[],
+    text=[],
+    mode='markers',
+    hoverinfo='text',
+    marker=dict(
+        showscale=False, #set true to see side scale based on colorbar
+        # colorscale options
+        #'Greys' | 'YlGnBu' | 'Greens' | 'YlOrRd' | 'Bluered' | 'RdBu' |
+        #'Reds' | 'Blues' | 'Picnic' | 'Rainbow' | 'Portland' | 'Jet' |
+        #'Hot' | 'Blackbody' | 'Earth' | 'Electric' | 'Viridis' |
+        colorscale='YlGnBu',
+        reversescale=True,
+        color=[],
+        size=10,
+        colorbar=dict(
+            thickness=15,
+            title='Node Connections',
+            xanchor='left',
+            titleside='right'
+        ),
+        line=dict(width=2)))
+
+    for node in G.nodes():
+        x, y = G.node[node]['pos']
+        node_trace['x'] += tuple([x])
+        node_trace['y'] += tuple([y])
+        node_trace['marker']['color']+=tuple([10]) #set node color
+        node_trace['text']+=tuple([node.vector_str()]) #set vector as info
+
+    return node_trace
 
 def draw_graph(G):
     #here G is a networkx graph object
     edge_trace = create_edge_trace(G)
     node_trace = create_node_trace(G)
     fig = go.Figure(data=[edge_trace,node_trace]) #can add layout = go.Layout()
-    pyoffline.plot(fig,filename='dvr_graph')
+    pyoffline.plot(fig,filename='dvr_graph',image='jpeg')
 
 def main():
     # Parse arguments

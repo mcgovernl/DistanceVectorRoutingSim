@@ -156,7 +156,7 @@ def create_node_trace(G):
         colorscale='YlGnBu',
         reversescale=True,
         color=[],
-        size=10,
+        size=100,
         colorbar=dict(
             thickness=15,
             title='Node Connections',
@@ -170,6 +170,7 @@ def create_node_trace(G):
         node_trace['x'] += tuple([x])
         node_trace['y'] += tuple([y])
         node_trace['marker']['color']+=tuple([10]) #set node color
+        print(node.vector_str())
         node_trace['text']+=tuple([node.vector_str()]) #set vector as info
 
     return node_trace
@@ -178,7 +179,16 @@ def draw_graph(G):
     #here G is a networkx graph object
     edge_trace = create_edge_trace(G)
     node_trace = create_node_trace(G)
-    fig = go.Figure(data=[edge_trace,node_trace]) #can add layout = go.Layout()
+    lay = layout=go.Layout(
+                title='<br>Distance Vector Routing Graph',
+                titlefont=dict(size=16),
+                showlegend=False,
+                hovermode='closest',
+                margin=dict(b=20,l=5,r=5,t=40),
+                annotations=[],
+                xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
+    fig = go.Figure(data=[edge_trace,node_trace], layout=lay) #can add layout = go.Layout()
     pyoffline.plot(fig,filename='dvr_graph',image='jpeg')
 
 def main():

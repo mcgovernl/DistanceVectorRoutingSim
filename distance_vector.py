@@ -5,11 +5,10 @@ import os
 import sys
 import time
 import copy
-import bisect #not sure we need this one
-import plotly
+import random
+import plotly.offline as pyoffline
 import plotly.plotly as py
 import plotly.graph_objs as go
-
 import networkx as nx
 
 #py = plotly.plotly("SammyButts", "xWKnYKgB6AiZiZ7U9Ql1") used for plotting online
@@ -19,7 +18,7 @@ class Simulation:
         self._settings = settings
         self._switches = self.create_switches(settings.switches,settings.links,settings.delay)
         self._links = settings.links
-        self._sentvectors = {} #key is where vector should be going, value is list of vectors
+        self._sentvectors = {} #key is where vector should be going and delay, value is list of vectors, !!!might need to add tird entry in tuple with where it came from
         self._recvectors = {} #key is where vector should be going, value is list of vectors
 
     def create_switches(self,n,links,delay):
@@ -111,11 +110,37 @@ class NetworkState:
 def create_graph(settings,state):
     #creates a graph from a network state object
     G = nx.Graph()
-    for (num,switch) in state._switches.items():
-        G.add_node(switch)
+    for num,switch in state._switches.items():
+        G.add_node(switch, pos=(num ,num % 2)) #need to set node pos to create traces, setting randomly for time being
         for snum in switch._links:
-            G.add_edge(num,snum)
+            G.add_edge(switch,state._switches[snum]) #adds nodes improperly
     return G
+
+def create_edge_trace(G):
+    edge_trace = go.Scatter(
+        x=[],
+        y=[],
+        line=dict(width=1,color='#888'),
+        hoverinfo='none',
+        mode='lines')
+    for edge in G.edges():
+        #dont understand how this works
+        x0, y0 = G.node[edge[0]]['pos']
+        x1, y1 = G.node[edge[1]]['pos']
+        edge_trace['x'] += tuple([x0, x1, None])
+        edge_trace['y'] += tuple([y0, y1, None])
+
+    return edge_trace
+
+def create_node_trace(G):
+    node_trace = go.Scatter()
+
+def draw_graph(G):
+    #here G is a networkx graph object
+    edge_trace = create_edge_trace(G)
+    node_trace = create_node_trace(G)
+    fig = go.Figure(data=[edge_trace,node_trace]) #can add layout = go.Layout()
+    pyoffline.plot(fig,filename='dvr_graph')
 
 def main():
     # Parse arguments
@@ -136,8 +161,11 @@ def main():
     # Run simulation for specified number of steps
     for t in range(settings.steps):
         state = simulation.step(t)
-        state.display()
+        #state.display()
         G = create_graph(settings,state)
+        draw_graph(G)
+
+
 
 if __name__ == '__main__':
     main()

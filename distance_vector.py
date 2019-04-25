@@ -177,11 +177,11 @@ def create_frame(G,t):
     #here G is a networkx graph object
     edge_trace = create_edge_trace(G)
     node_trace = create_node_trace(G)
-    edge_frame = go.Frame(data=[edge_trace],group='edges',name='edges at time '+str(t))
+    #edge_frame = go.Frame(data=[edge_trace],group='edges',name='edges at time '+str(t))
     node_frame = go.Frame(data=[node_trace],group='nodes',name='nodes at time '+str(t))
-    return [node_frame,edge_frame]
+    return [node_frame,edge_trace]
 
-def animate(f):
+def animate(f,edges):
     #takes list of frames as arg creates layout and animation
     lay = go.Layout(
                 title='<br>Distance Vector Routing Graph',
@@ -242,7 +242,7 @@ def animate(f):
                         ]
                     })
     lay['sliders'] = [slider_dict]
-    fig = go.Figure(data=[{'x': [0, 1], 'y': [0, 1]}],frames=f, layout=lay)
+    fig = go.Figure(data=[edges,edges],frames=f, layout=lay)
     plot(fig,filename='dvr_graph.html')
 
 def main():
@@ -270,9 +270,10 @@ def main():
         #state.display()
         G = create_graph(settings,state) #create a graph of the netork each time step
         graph_frames = create_frame(G,t) #create a frame of the graph each time step
-        frames.extend(graph_frames)
+        frames.append(graph_frames[0])
+        edges = graph_frames[1]
 
-    animate(frames)
+    animate(frames,edges)
 
 
 if __name__ == '__main__':

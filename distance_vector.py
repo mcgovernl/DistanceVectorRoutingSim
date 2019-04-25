@@ -216,14 +216,14 @@ def animate(f):
     'pad': {'b': 10, 't': 50},
     'len': 0.9,
     'x': 0,
-    'y': -1,
+    'y': -0.25,
     'steps': []
     }
     for frame in f:
         slider_dict['steps'].append( {
                         'method': 'animate',
                         'label': frame['name'],
-                        'args': [{'frame': {'duration': 300, 'redraw': False},
+                        'args': [[frame['name']],{'frame': {'duration': 300, 'redraw': False},
                              'mode': 'immediate'}
                         ]
                     })

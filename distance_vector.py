@@ -197,7 +197,13 @@ def animate(f):
                 updatemenus= [{'type': 'buttons',
                            'buttons': [{'label': 'Play',
                                         'method': 'animate',
-                                        'args': ['nodes']}]}])
+                                        'args': ['nodes']},
+                                        {'args': [[None], {'frame': {'duration': 0, 'redraw': False}, 'mode': 'immediate',
+                                        'transition': {'duration': 0}}],
+                                        'label': 'Pause',
+                                        'method': 'animate'
+                                    }]
+                            }])
     fig = go.Figure(data=[{'x': [0, 1], 'y': [0, 1]}],frames=f, layout=lay) #can add layout = go.Layout()
     plot(fig,filename='dvr_graph.html')
 

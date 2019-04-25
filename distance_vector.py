@@ -218,7 +218,7 @@ def animate(f):
                             }])
     slider_dict = { #create slider dict
     'active': 0,
-    'yanchor': 'bottom',
+    'yanchor': 'top',
     'xanchor': 'left',
     'currentvalue': {
         'font': {'size': 20},
@@ -236,7 +236,7 @@ def animate(f):
     for frame in f:
         slider_dict['steps'].append( {
                         'method': 'animate',
-                        'label': frame['name'],
+                        'label': frame['name'][-1],
                         'args': [[frame['name']],{'frame': {'duration': 300, 'redraw': False},
                              'mode': 'immediate'}
                         ]

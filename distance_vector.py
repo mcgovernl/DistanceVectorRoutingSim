@@ -192,15 +192,29 @@ def animate(f):
                 annotations=[],
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                updatemenus= [{'type': 'buttons',
-                           'buttons': [{'label': 'Play',
-                                        'method': 'animate',
-                                        'args': ['nodes']},
-                                        {'args': [[None], {'frame': {'duration': 0, 'redraw': False}, 'mode': 'immediate',
+                updatemenus= [{
+                                'buttons': [
+                                    {
+                                        'args': ['nodes', {'frame': {'duration': 500, 'redraw': False},
+                                                 'fromcurrent': True, 'transition': {'duration': 300, 'easing': 'quadratic-in-out'}}],
+                                        'label': 'Play',
+                                        'method': 'animate'
+                                    },
+                                    {
+                                        'args': [[None], {'frame': {'duration': 0, 'redraw': False}, 'mode': 'immediate',
                                         'transition': {'duration': 0}}],
                                         'label': 'Pause',
                                         'method': 'animate'
-                                    }]
+                                    }
+                                ],
+                                'direction': 'left',
+                                'pad': {'r': 10, 't': 87},
+                                'showactive': False,
+                                'type': 'buttons',
+                                'x': 0,
+                                'xanchor': 'right',
+                                'y': -0.1,
+                                'yanchor': 'top'
                             }])
     slider_dict = { #create slider dict
     'active': 0,

@@ -7,19 +7,16 @@ import time
 import copy
 import random
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
-import plotly.plotly as py
 import plotly.graph_objs as go
 import networkx as nx
-
-#py = plotly.plotly("SammyButts", "xWKnYKgB6AiZiZ7U9Ql1") used for plotting online
 
 class Simulation:
     def __init__(self,settings):
         self._settings = settings
         self._switches = self.create_switches(settings.switches,settings.links,settings.delay)
         self._links = settings.links
-        self._sentvectors = {} #key is where vector should be going and delay, value is list of vectors, !!!might need to add tird entry in tuple with where it came from
-        self._recvectors = {} #key is where vector should be going, value is list of vectors
+        self._sentvectors = {} #key is where vector should be going and delay, value is list of vectors, !!!might need to add entry in tuple with where it came from
+        self._recvectors = {} #key is where vector should be going, value is list of vectors !!!might need to add entry in tuple with where it came from
 
     def create_switches(self,n,links,delay):
         switches = {}
@@ -114,6 +111,7 @@ class NetworkState:
                     output += "Switch " + str(num) + " has a cost of " + str(vector[num]) + "\n"
         print(output)
 
+#below is all graphing related functions
 def create_graph(settings,state):
     #creates a graph from a network state object
     G = nx.Graph()
@@ -204,7 +202,33 @@ def animate(f):
                                         'method': 'animate'
                                     }]
                             }])
-    fig = go.Figure(data=[{'x': [0, 1], 'y': [0, 1]}],frames=f, layout=lay) #can add layout = go.Layout()
+    slider_dict = { #create slider dict
+    'active': 0,
+    'yanchor': 'bottom',
+    'xanchor': 'left',
+    'currentvalue': {
+        'font': {'size': 20},
+        'prefix': 'Time Step: ',
+        'visible': True,
+        'xanchor': 'left'
+    },
+    'transition': {'duration': 300, 'easing': 'cubic-in-out'},
+    'pad': {'b': 10, 't': 50},
+    'len': 0.9,
+    'x': 0,
+    'y': -1,
+    'steps': []
+    }
+    for frame in f:
+        slider_dict['steps'].append( {
+                        'method': 'animate',
+                        'label': frame['name'],
+                        'args': [{'frame': {'duration': 300, 'redraw': False},
+                             'mode': 'immediate'}
+                        ]
+                    })
+    lay['sliders'] = [slider_dict]
+    fig = go.Figure(data=[{'x': [0, 1], 'y': [0, 1]}],frames=f, layout=lay)
     plot(fig,filename='dvr_graph.html')
 
 def main():

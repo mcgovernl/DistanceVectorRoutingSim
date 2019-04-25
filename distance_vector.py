@@ -80,10 +80,10 @@ class Switch:
         return
 
     def vector_str(self):
-        #take the vector and turn it into a nicely formated form for veiwing
-        s = "Vector for Switch "+str(self._num)+"\n| Sequence Number | Distance |\n"
+        #take the vector and turn it into a nicely formated form for veiwing in plotly
+        s = "Vector for Switch "+str(self._num)+"<br>| Sequence Number | Distance |<br>"
         for num in self._vector:
-            s += "| "+ str(num) + " | " + str(self._vector[num]) + " |\n"
+            s += "| "+ str(num) + " | " + str(self._vector[num]) + " |<br>"
         return s
 
 class NetworkState:
@@ -127,8 +127,9 @@ def create_edge_trace(G):
     edge_trace = go.Scatter(
         x=[],
         y=[],
+        text = [],
         line=dict(width=3,color='#888'),
-        hoverinfo='none',
+        hoverinfo='text',
         mode='lines')
 
     for edge in G.edges():
@@ -170,20 +171,21 @@ def create_node_trace(G):
         node_trace['x'] += tuple([x])
         node_trace['y'] += tuple([y])
         node_trace['marker']['color']+=tuple([10]) #set node color
-        print(node.vector_str())
         node_trace['text']+=tuple([node.vector_str()]) #set vector str as info
 
     return node_trace
 
-def create_frame(G):
+def create_frame(G,t):
     #here G is a networkx graph object
     edge_trace = create_edge_trace(G)
     node_trace = create_node_trace(G)
-    return go.Frame(data=[node_trace,edge_trace])
+    edge_frame = go.Frame(data=[edge_trace],group='edges',name='edges at time '+str(t))
+    node_frame = go.Frame(data=[node_trace],group='nodes',name='nodes at time '+str(t))
+    return [node_frame,edge_frame]
 
 def animate(f):
     #takes list of frames as arg creates layout and animation
-    lay = layout=go.Layout(
+    lay = go.Layout(
                 title='<br>Distance Vector Routing Graph',
                 titlefont=dict(size=16),
                 showlegend=False,
@@ -195,9 +197,9 @@ def animate(f):
                 updatemenus= [{'type': 'buttons',
                            'buttons': [{'label': 'Play',
                                         'method': 'animate',
-                                        'args': [None]}]}])
+                                        'args': ['nodes']}]}])
     fig = go.Figure(data=[{'x': [0, 1], 'y': [0, 1]}],frames=f, layout=lay) #can add layout = go.Layout()
-    plot(fig,filename='dvr_graph')
+    plot(fig,filename='dvr_graph.html')
 
 def main():
     # Parse arguments
@@ -223,8 +225,8 @@ def main():
         state = simulation.step(t)
         #state.display()
         G = create_graph(settings,state) #create a graph of the netork each time step
-        frame = create_frame(G) #create a frame of the graph each time step
-        frames.append(frame)
+        graph_frames = create_frame(G,t) #create a frame of the graph each time step
+        frames.extend(graph_frames)
 
     animate(frames)
 

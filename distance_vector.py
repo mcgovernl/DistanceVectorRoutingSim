@@ -6,20 +6,17 @@ import sys
 import time
 import copy
 import random
-import plotly.offline as pyoffline
-import plotly.plotly as py
+from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 import plotly.graph_objs as go
 import networkx as nx
-
-#py = plotly.plotly("SammyButts", "xWKnYKgB6AiZiZ7U9Ql1") used for plotting online
 
 class Simulation:
     def __init__(self,settings):
         self._settings = settings
         self._switches = self.create_switches(settings.switches,settings.links,settings.delay)
         self._links = settings.links
-        self._sentvectors = {} #key is where vector should be going and delay, value is list of vectors, !!!might need to add tird entry in tuple with where it came from
-        self._recvectors = {} #key is where vector should be going, value is list of vectors
+        self._sentvectors = {} #key is where vector should be going and delay, value is list of vectors, !!!might need to add entry in tuple with where it came from
+        self._recvectors = {} #key is where vector should be going, value is list of vectors !!!might need to add entry in tuple with where it came from
 
     def create_switches(self,n,links,delay):
         switches = {}
@@ -80,10 +77,10 @@ class Switch:
         return
 
     def vector_str(self):
-        #take the vector and turn it into a nicely formated form for veiwing
-        s = "Vector for Switch "+str(self._num)+"\n| Sequence Number | Distance |\n"
+        #take the vector and turn it into a nicely formated form for veiwing in plotly
+        s = "Vector for Switch "+str(self._num)+"<br>| Sequence Number | Distance |<br>"
         for num in self._vector:
-            s += "| "+ str(num) + " | " + str(self._vector[num]) + " |\n"
+            s += "| "+ str(num) + " | " + str(self._vector[num]) + " |<br>"
         return s
 
 class NetworkState:
@@ -114,6 +111,7 @@ class NetworkState:
                     output += "Switch " + str(num) + " has a cost of " + str(vector[num]) + "\n"
         print(output)
 
+#below is all graphing related functions
 def create_graph(settings,state):
     #creates a graph from a network state object
     G = nx.Graph()
@@ -127,8 +125,9 @@ def create_edge_trace(G):
     edge_trace = go.Scatter(
         x=[],
         y=[],
-        line=dict(width=1,color='#888'),
-        hoverinfo='none',
+        text = [],
+        line=dict(width=3,color='#888'),
+        hoverinfo='text',
         mode='lines')
 
     for edge in G.edges():
@@ -170,16 +169,21 @@ def create_node_trace(G):
         node_trace['x'] += tuple([x])
         node_trace['y'] += tuple([y])
         node_trace['marker']['color']+=tuple([10]) #set node color
-        print(node.vector_str())
-        node_trace['text']+=tuple([node.vector_str()]) #set vector as info
+        node_trace['text']+=tuple([node.vector_str()]) #set vector str as info
 
     return node_trace
 
-def draw_graph(G):
+def create_frame(G,t):
     #here G is a networkx graph object
     edge_trace = create_edge_trace(G)
     node_trace = create_node_trace(G)
-    lay = layout=go.Layout(
+    #edge_frame = go.Frame(data=[edge_trace],group='edges',name='edges at time '+str(t))
+    node_frame = go.Frame(data=[node_trace],group='nodes',name='nodes at time '+str(t))
+    return [node_frame,edge_trace]
+
+def animate(f,edges):
+    #takes list of frames as arg creates layout and animation
+    lay = go.Layout(
                 title='<br>Distance Vector Routing Graph',
                 titlefont=dict(size=16),
                 showlegend=False,
@@ -187,9 +191,59 @@ def draw_graph(G):
                 margin=dict(b=20,l=5,r=5,t=40),
                 annotations=[],
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
-    fig = go.Figure(data=[edge_trace,node_trace], layout=lay) #can add layout = go.Layout()
-    pyoffline.plot(fig,filename='dvr_graph',image='jpeg')
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                updatemenus= [{
+                                'buttons': [
+                                    {
+                                        'args': ['nodes', {'frame': {'duration': 500, 'redraw': False},
+                                                 'fromcurrent': True, 'transition': {'duration': 300, 'easing': 'quadratic-in-out'}}],
+                                        'label': 'Play',
+                                        'method': 'animate'
+                                    },
+                                    {
+                                        'args': [[None], {'frame': {'duration': 0, 'redraw': False}, 'mode': 'immediate',
+                                        'transition': {'duration': 0}}],
+                                        'label': 'Pause',
+                                        'method': 'animate'
+                                    }
+                                ],
+                                'direction': 'left',
+                                'pad': {'r': 10, 't': 87},
+                                'showactive': False,
+                                'type': 'buttons',
+                                'x': 0,
+                                'xanchor': 'right',
+                                'y': -0.1,
+                                'yanchor': 'top'
+                            }])
+    slider_dict = { #create slider dict
+    'active': 0,
+    'yanchor': 'top',
+    'xanchor': 'left',
+    'currentvalue': {
+        'font': {'size': 20},
+        'prefix': 'Time Step: ',
+        'visible': True,
+        'xanchor': 'left'
+    },
+    'transition': {'duration': 300, 'easing': 'cubic-in-out'},
+    'pad': {'b': 10, 't': 50},
+    'len': 0.9,
+    'x': 0,
+    'y': -0.25,
+    'steps': []
+    }
+    for frame in f:
+        slider_dict['steps'].append( {
+                        'method': 'animate',
+                        'label': frame['name'][-1],
+                        'args': [[frame['name']],{'frame': {'duration': 300, 'redraw': False},
+                             'mode': 'immediate'}
+                        ]
+                    })
+    lay['sliders'] = [slider_dict]
+    fig = go.Figure(data=[edges,edges],frames=f, layout=lay)
+    plot(fig,filename='dvr_graph.html')
 
 def main():
     # Parse arguments
@@ -207,13 +261,19 @@ def main():
     # Create simulation
     simulation = Simulation(settings)
 
+    #create frame list for animation later
+    frames = []
+
     # Run simulation for specified number of steps
     for t in range(settings.steps):
         state = simulation.step(t)
         #state.display()
-        G = create_graph(settings,state)
-        draw_graph(G)
+        G = create_graph(settings,state) #create a graph of the netork each time step
+        graph_frames = create_frame(G,t) #create a frame of the graph each time step
+        frames.append(graph_frames[0])
+        edges = graph_frames[1]
 
+    animate(frames,edges)
 
 
 if __name__ == '__main__':

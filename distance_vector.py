@@ -6,7 +6,7 @@ import sys
 import time
 import copy
 import random
-import plotly.offline as pyoffline
+from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 import plotly.plotly as py
 import plotly.graph_objs as go
 import networkx as nx
@@ -127,7 +127,7 @@ def create_edge_trace(G):
     edge_trace = go.Scatter(
         x=[],
         y=[],
-        line=dict(width=1,color='#888'),
+        line=dict(width=3,color='#888'),
         hoverinfo='none',
         mode='lines')
 
@@ -171,14 +171,18 @@ def create_node_trace(G):
         node_trace['y'] += tuple([y])
         node_trace['marker']['color']+=tuple([10]) #set node color
         print(node.vector_str())
-        node_trace['text']+=tuple([node.vector_str()]) #set vector as info
+        node_trace['text']+=tuple([node.vector_str()]) #set vector str as info
 
     return node_trace
 
-def draw_graph(G):
+def create_frame(G):
     #here G is a networkx graph object
     edge_trace = create_edge_trace(G)
     node_trace = create_node_trace(G)
+    return go.Frame(data=[node_trace,edge_trace])
+
+def animate(f):
+    #takes list of frames as arg creates layout and animation
     lay = layout=go.Layout(
                 title='<br>Distance Vector Routing Graph',
                 titlefont=dict(size=16),
@@ -187,9 +191,13 @@ def draw_graph(G):
                 margin=dict(b=20,l=5,r=5,t=40),
                 annotations=[],
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
-    fig = go.Figure(data=[edge_trace,node_trace], layout=lay) #can add layout = go.Layout()
-    pyoffline.plot(fig,filename='dvr_graph',image='jpeg')
+                yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+                updatemenus= [{'type': 'buttons',
+                           'buttons': [{'label': 'Play',
+                                        'method': 'animate',
+                                        'args': [None]}]}])
+    fig = go.Figure(data=[{'x': [0, 1], 'y': [0, 1]}],frames=f, layout=lay) #can add layout = go.Layout()
+    plot(fig,filename='dvr_graph')
 
 def main():
     # Parse arguments
@@ -207,13 +215,18 @@ def main():
     # Create simulation
     simulation = Simulation(settings)
 
+    #create frame list for animation later
+    frames = []
+
     # Run simulation for specified number of steps
     for t in range(settings.steps):
         state = simulation.step(t)
         #state.display()
-        G = create_graph(settings,state)
-        draw_graph(G)
+        G = create_graph(settings,state) #create a graph of the netork each time step
+        frame = create_frame(G) #create a frame of the graph each time step
+        frames.append(frame)
 
+    animate(frames)
 
 
 if __name__ == '__main__':

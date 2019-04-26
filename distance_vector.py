@@ -177,11 +177,11 @@ def create_frame(G,t):
     #here G is a networkx graph object
     edge_trace = create_edge_trace(G)
     node_trace = create_node_trace(G)
-    #edge_frame = go.Frame(data=[edge_trace],group='edges',name='edges at time '+str(t))
+    edge_frame = go.Frame(data=[edge_trace],group='edges',name='edges at time '+str(t))
     node_frame = go.Frame(data=[node_trace],group='nodes',name='nodes at time '+str(t))
-    return [node_frame,edge_trace]
+    return [node_frame,edge_frame,node_trace,edge_trace]
 
-def animate(f,edges):
+def animate(f,edges,nodes):
     #takes list of frames as arg creates layout and animation
     lay = go.Layout(
                 title='<br>Distance Vector Routing Graph',
@@ -242,7 +242,7 @@ def animate(f,edges):
                         ]
                     })
     lay['sliders'] = [slider_dict]
-    fig = go.Figure(data=[edges,edges],frames=f, layout=lay)
+    fig = go.Figure(data=[edges,edges,nodes,nodes],frames=f, layout=lay)
     plot(fig,filename='dvr_graph.html')
 
 def main():
@@ -257,6 +257,7 @@ def main():
     arg_parser.add_argument('--delay', dest='delay', action='store',
             type=list, default=[0,0,0,0,0,0,0], help="List of delay in sending for each switch")
     settings = arg_parser.parse_args()
+    #issue here as lists don't seem to parse
 
     # Create simulation
     simulation = Simulation(settings)
@@ -271,9 +272,11 @@ def main():
         G = create_graph(settings,state) #create a graph of the netork each time step
         graph_frames = create_frame(G,t) #create a frame of the graph each time step
         frames.append(graph_frames[0])
-        edges = graph_frames[1]
+        nodes = graph_frames[2]
+        edges = graph_frames[3]
 
-    animate(frames,edges)
+
+    animate(frames,edges,nodes)
 
 
 if __name__ == '__main__':

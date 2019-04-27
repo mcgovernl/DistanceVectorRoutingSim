@@ -28,10 +28,10 @@ class Simulation:
         for snum,switch in self._switches.items():
             if switch._updated:
                 for num in switch._links:
-                    if (num,switch._delay) in self._sentvectors:
-                        self._sentvectors[(num,switch._delay)].append(copy.deepcopy(switch._vector)) #need to deepcopy to avoid passing a reference to switch classes vector
+                    if (num,snum,switch._delay) in self._sentvectors:
+                        self._sentvectors[(num,snum,switch._delay)].append(copy.deepcopy(switch._vector)) #need to deepcopy to avoid passing a reference to switch classes vector
                     else:
-                        self._sentvectors[(num,switch._delay)] = [copy.deepcopy(switch._vector)] #need to deepcopy to avoid passing a reference to switch classes vector
+                        self._sentvectors[(num,snum,switch._delay)] = [copy.deepcopy(switch._vector)] #need to deepcopy to avoid passing a reference to switch classes vector
             switch._updated = False
 
     def recv_vectors(self):
@@ -42,11 +42,12 @@ class Simulation:
 
     def transport_vectors(self):
         vectors = {}
-        for num,delay in self._sentvectors:
+        for num,snum,delay in self._sentvectors:
             if delay == 0:
-                self._recvectors[num] = self._sentvectors[(num,delay)]
+                #might need to check if we are overiding something
+                self._recvectors[num] = self._sentvectors[(num,snum,delay)] #imporerly adding now
             else:
-                vectors[(num,delay-1)] = self._sentvectors[(num,delay)]
+                vectors[(num,snum,delay-1)] = self._sentvectors[(num,snum,delay)]
         self._sentvectors.clear()
         self._sentvectors = vectors
 
@@ -116,12 +117,12 @@ def create_graph(settings,state):
     #creates a graph from a network state object
     G = nx.Graph()
     for num,switch in state._switches.items():
-        G.add_node(switch, pos=(num ,num % 2)) #need to set node pos to create traces, need some way to standardize node placement
+        G.add_node(switch, pos=(num ,num % 2)) #!!!should place nodes in circle based upon num of total nodes
         for snum in switch._links:
-            G.add_edge(switch,state._switches[snum])
+            G.add_edge(switch,state._switches[snum]) #might need to add somethign here to store sent vector info
     return G
 
-def create_edge_trace(G):
+def create_edge_trace(G,inflight_vectors):
     edge_trace = go.Scatter(
         x=[],
         y=[],
@@ -131,11 +132,21 @@ def create_edge_trace(G):
         mode='lines')
 
     for edge in G.edges():
-        #dont understand how this works
+        #need to somehow update text to show sent vector info
+        #edge[0] is switch where edge starts
+        #edge[1] is switch where edge ends
         x0, y0 = G.node[edge[0]]['pos']
         x1, y1 = G.node[edge[1]]['pos']
         edge_trace['x'] += tuple([x0, x1, None])
         edge_trace['y'] += tuple([y0, y1, None])
+        key = (edge[0]._num,edge[1]._num,edge[0]._delay)
+        if key in inflight_vectors:
+            vectors = inflight_vectors[key] #vector going from where edge starts to where it ends
+            for vector in vectors:
+                s = "Vector traveling from Switch "+str(edge[0]._num)+"to Switch "+str(edge[1]._num)+"<br>| Sequence Number | Distance |<br>"
+                for num in vector:
+                    s += "| "+ str(num) + " | " + str(vector[num]) + " |<br>"
+            edge_trace['text'] += tuple([s,s,None])
 
     return edge_trace
 
@@ -173,9 +184,9 @@ def create_node_trace(G):
 
     return node_trace
 
-def create_frame(G,t):
+def create_frame(G,inflight_vectors,t):
     #here G is a networkx graph object
-    edge_trace = create_edge_trace(G)
+    edge_trace = create_edge_trace(G,inflight_vectors)
     node_trace = create_node_trace(G)
     edge_frame = go.Frame(data=[edge_trace],group='edges',name='edges at time '+str(t))
     node_frame = go.Frame(data=[node_trace],group='nodes',name='nodes at time '+str(t))
@@ -268,15 +279,15 @@ def main():
     # Run simulation for specified number of steps
     for t in range(settings.steps):
         state = simulation.step(t)
-        #state.display()
+        state.display()
         G = create_graph(settings,state) #create a graph of the netork each time step
-        graph_frames = create_frame(G,t) #create a frame of the graph each time step
+        graph_frames = create_frame(G,state._sentvectors,t) #create a frame of the graph each time step
         frames.append(graph_frames[0])
         nodes = graph_frames[2]
         edges = graph_frames[3]
 
 
-    animate(frames,edges,nodes)
+    #animate(frames,edges,nodes)
 
 
 if __name__ == '__main__':

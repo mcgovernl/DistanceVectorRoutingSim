@@ -136,6 +136,17 @@ def create_edge_trace(G,inflight_vectors):
         hoverinfo='text',
         mode='lines')
 
+    middle_node_trace = go.Scatter(
+    x=[],
+    y=[],
+    text=[],
+    mode='markers',
+    hoverinfo='text',
+    marker=go.scatter.Marker(
+        opacity=0
+        )
+    )
+
     for edge in G.edges():
         #need to somehow update text to show sent vector info
         #edge[0] is switch where edge starts
@@ -144,16 +155,21 @@ def create_edge_trace(G,inflight_vectors):
         x1, y1 = G.node[edge[1]]['pos']
         edge_trace['x'] += tuple([x0, x1, None])
         edge_trace['y'] += tuple([y0, y1, None])
+
+        middle_node_trace['x'] += tuple([(x0+x1)/2])
+        middle_node_trace['y'] += tuple([(y0+y1)/2])
+
         key = (edge[0]._num,edge[1]._num,edge[0]._delay)
         if key in inflight_vectors:
             vectors = inflight_vectors[key] #vector going from where edge starts to where it ends
+            s = ""
             for vector in vectors:
-                s = "Vector traveling from Switch "+str(edge[0]._num)+"to Switch "+str(edge[1]._num)+"<br>| Sequence Number | Distance |<br>"
+                s += "Vector traveling from Switch "+str(edge[0]._num)+" to Switch "+str(edge[1]._num)+"<br>| Sequence Number | Distance |<br>"
                 for num in vector:
                     s += "| "+ str(num) + " | " + str(vector[num]) + " |<br>"
-            edge_trace['text'] += tuple([s,s,None])
+            middle_node_trace['text'] += tuple([s])
 
-    return edge_trace
+    return [edge_trace,middle_node_trace]
 
 def create_node_trace(G):
     node_trace = go.Scatter(
@@ -191,11 +207,11 @@ def create_node_trace(G):
 
 def create_frame(G,inflight_vectors,t):
     #here G is a networkx graph object
-    edge_trace = create_edge_trace(G,inflight_vectors)
+    [edge_trace,middle_node_trace] = create_edge_trace(G,inflight_vectors)
     node_trace = create_node_trace(G)
-    edge_frame = go.Frame(data=[edge_trace],group='edges',name='edges at time '+str(t))
+    edge_frame = go.Frame(data=[middle_node_trace],group='edges',name='edges at time '+str(t))
     node_frame = go.Frame(data=[node_trace],group='nodes',name='nodes at time '+str(t))
-    return [node_frame,edge_frame,node_trace,edge_trace]
+    return [node_frame,edge_frame,node_trace,edge_trace,middle_node_trace]
 
 def animate(f,edges,nodes):
     #takes list of frames as arg creates layout and animation
@@ -288,8 +304,12 @@ def main():
         G = create_graph(settings,state) #create a graph of the netork each time step
         graph_frames = create_frame(G,state._sentvectors,t) #create a frame of the graph each time step
         frames.append(graph_frames[0])
-        nodes = graph_frames[2]
-        edges = graph_frames[3]
+        frames.append(graph_frames[1])
+        if t == 0:
+            nodes = graph_frames[2]
+            nodes['hoverinfo'] = 'skip'
+            edges = graph_frames[3]
+            edges['hoverinfo'] = 'skip'
 
 
     animate(frames,edges,nodes)

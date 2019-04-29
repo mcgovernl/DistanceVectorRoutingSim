@@ -24,6 +24,7 @@ class Simulation:
             switches[i] = Switch(i,links[i],delay[i])
         return switches
 
+    #need to fix the logic so i can animate the edges
     def send_vectors(self):
         for snum,switch in self._switches.items():
             if switch._updated:
@@ -36,7 +37,8 @@ class Simulation:
 
     def recv_vectors(self):
         for num in self._recvectors:
-            for vector in self._recvectors[num]:
+            for vectors in self._recvectors[num]:
+                for vector in vectors:
                     self._switches[num].update_vector(vector)
         self._recvectors.clear()
 
@@ -44,8 +46,10 @@ class Simulation:
         vectors = {}
         for num,snum,delay in self._sentvectors:
             if delay == 0:
-                #might need to check if we are overiding something
-                self._recvectors[num] = self._sentvectors[(num,snum,delay)] #imporerly adding now
+                if num in self._recvectors:
+                    self._recvectors[num].append(copy.deepcopy(self._sentvectors[(num,snum,delay)]))
+                else:
+                    self._recvectors[num] = [copy.deepcopy(self._sentvectors[(num,snum,delay)])]
             else:
                 vectors[(num,snum,delay-1)] = self._sentvectors[(num,snum,delay)]
         self._sentvectors.clear()
@@ -106,10 +110,11 @@ class NetworkState:
                     output += "Switch " + str(num) + " has a cost of " + str(vector[num]) + "\n"
         output += "About to be received vectors:\n"
         for num in self._recvectors:
-            output += "En route to " + str(num) + "\n"
-            for vector in self._recvectors[num]:
-                for num in vector:
-                    output += "Switch " + str(num) + " has a cost of " + str(vector[num]) + "\n"
+            output += "To be received by " + str(num) + "\n"
+            for vectors in self._recvectors[num]:
+                for vector in vectors:
+                    for num in vector:
+                        output += "Switch " + str(num) + " has a cost of " + str(vector[num]) + "\n"
         print(output)
 
 #below is all graphing related functions

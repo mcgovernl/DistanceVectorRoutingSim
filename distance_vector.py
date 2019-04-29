@@ -284,7 +284,7 @@ def main():
     # Run simulation for specified number of steps
     for t in range(settings.steps):
         state = simulation.step(t)
-        state.display()
+        #state.display()
         G = create_graph(settings,state) #create a graph of the netork each time step
         graph_frames = create_frame(G,state._sentvectors,t) #create a frame of the graph each time step
         frames.append(graph_frames[0])
@@ -292,7 +292,7 @@ def main():
         edges = graph_frames[3]
 
 
-    #animate(frames,edges,nodes)
+    animate(frames,edges,nodes)
 
 
 if __name__ == '__main__':

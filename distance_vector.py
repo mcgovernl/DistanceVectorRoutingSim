@@ -9,6 +9,7 @@ import random
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 import plotly.graph_objs as go
 import networkx as nx
+import math
 
 class Simulation:
     def __init__(self,settings):
@@ -120,11 +121,15 @@ class NetworkState:
 #below is all graphing related functions
 def create_graph(settings,state):
     #creates a graph from a network state object
+    r = settings.switches #circle radius
+    theta = ((2*math.pi)/r) #degree seperation between nodes
     G = nx.Graph()
     for num,switch in state._switches.items():
-        G.add_node(switch, pos=(num ,num % 2)) #!!!should place nodes in circle based upon num of total nodes
+        x= r*math.cos(num*theta)
+        y= r*math.sin(num*theta)
+        G.add_node(switch, pos=(x ,y))
         for snum in switch._links:
-            G.add_edge(switch,state._switches[snum]) #might need to add somethign here to store sent vector info
+            G.add_edge(switch,state._switches[snum])
     return G
 
 def create_edge_trace(G,inflight_vectors):
@@ -236,7 +241,7 @@ def animate(f,edges,nodes):
                 updatemenus= [{
                                 'buttons': [
                                     {
-                                        'args': ['nodes', {'frame': {'duration': 500, 'redraw': False},
+                                        'args': ['nodes', {'frame': {'duration': 1500, 'redraw': False},
                                                  'fromcurrent': True, 'transition': {'duration': 300, 'easing': 'quadratic-in-out'}}],
                                         'label': 'Play',
                                         'method': 'animate'
@@ -278,7 +283,7 @@ def animate(f,edges,nodes):
         slider_dict['steps'].append( {
                         'method': 'animate',
                         'label': frame['name'][-1],
-                        'args': [[frame['name']],{'frame': {'duration': 300, 'redraw': False},
+                        'args': [[frame['name']],{'frame': {'duration': 1500, 'redraw': False},
                              'mode': 'immediate'}
                         ]
                     })

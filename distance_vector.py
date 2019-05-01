@@ -223,9 +223,8 @@ def create_frame(G,inflight_vectors,t):
     #here G is a networkx graph object
     [edge_trace,middle_node_trace] = create_edge_trace(G,inflight_vectors)
     node_trace = create_node_trace(G)
-    edge_frame = go.Frame(data=[middle_node_trace],group='edges',name='edges at time '+str(t))
-    node_frame = go.Frame(data=[node_trace],group='nodes',name='nodes at time '+str(t))
-    return [node_frame,edge_frame,node_trace,edge_trace]
+    frame = go.Frame(data=[node_trace,middle_node_trace,edge_trace],group='nodes',name='nodes at time '+str(t)) #should change code from here, just naming is wrong
+    return [frame,node_trace,edge_trace]
 
 def animate(f,edges,nodes):
     #takes list of frames as arg creates layout and animation
@@ -318,11 +317,10 @@ def main():
         G = create_graph(settings,state) #create a graph of the netork each time step
         graph_frames = create_frame(G,state._sentvectors,t) #create a frame of the graph each time step
         frames.append(graph_frames[0])
-        frames.append(graph_frames[1])
         if t == 0:
-            nodes = graph_frames[2]
+            nodes = graph_frames[1]
             nodes['hoverinfo'] = 'skip'
-            edges = graph_frames[3]
+            edges = graph_frames[2]
             edges['hoverinfo'] = 'skip'
 
 

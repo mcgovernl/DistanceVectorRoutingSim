@@ -128,8 +128,8 @@ def create_graph(settings,state):
     theta = ((2*math.pi)/r) #degree seperation between nodes
     G = nx.Graph()
     for num,switch in state._switches.items():
-        x= r*math.cos(num*theta)
-        y= r*math.sin(num*theta)
+        x= math.cos(num*theta)
+        y= math.sin(num*theta)
         G.add_node(switch, pos=(x ,y))
         for snum in switch._links:
             G.add_edge(switch,state._switches[snum])

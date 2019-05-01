@@ -38,10 +38,10 @@ class Simulation:
             switch._updated = False
 
     def recv_vectors(self):
-        for num in self._recvectors:
-            for vectors in self._recvectors[num]:
+        for num,snum in self._recvectors:
+            for vectors in self._recvectors[(num,snum)]:
                 for vector in vectors:
-                    self._switches[num].update_vector(vector)
+                    self._switches[num].update_vector(snum,vector)
         self._recvectors.clear()
 
     def transport_vectors(self):
@@ -49,9 +49,9 @@ class Simulation:
         for num,snum,delay in self._sentvectors:
             if delay == 0:
                 if num in self._recvectors:
-                    self._recvectors[num].append(copy.deepcopy(self._sentvectors[(num,snum,delay)]))
+                    self._recvectors[(num,snum)].append(copy.deepcopy(self._sentvectors[(num,snum,delay)]))
                 else:
-                    self._recvectors[num] = [copy.deepcopy(self._sentvectors[(num,snum,delay)])]
+                    self._recvectors[(num,snum)] = [copy.deepcopy(self._sentvectors[(num,snum,delay)])]
             else:
                 vectors[(num,snum,delay-1)] = self._sentvectors[(num,snum,delay)]
         self._sentvectors.clear()
@@ -70,24 +70,26 @@ class Switch:
         self._links = links
         self._updated = True
         self._delay = delay
-        self._vector = {num:0}
+        self._vector = {num:(0,num)} #dict dest : dict distance:next hop
 
-    def update_vector(self, vector):
+    def update_vector(self,rnum,vector):
         #should process and update vector, should set updated if there was an update
         for num in vector:
+            dst = vector[num][0] #distance to vector
+            nxt = rnum #next hop
             if num not in self._vector:
-                self._vector[num] = vector[num]+1
+                self._vector[num] = (dst+1,nxt)
                 self._updated = True
-            elif self._vector[num] > vector[num]+1:
-                self._vector[num] = vector[num]+1
+            elif self._vector[num][0] > dst+1:
+                self._vector[num] = (dst+1,nxt)
                 self._updated = True
         return
 
     def vector_str(self):
         #take the vector and turn it into a nicely formated form for veiwing in plotly
-        s = "Vector for Switch "+str(self._num)+"<br>| Sequence Number | Distance |<br>"
+        s = "Vector for Switch "+str(self._num)+"<br>| Sequence Number | Distance | Next Hop |<br>"
         for num in self._vector:
-            s += "| "+ str(num) + " | " + str(self._vector[num]) + " |<br>"
+            s += "| "+ str(num) + " | " + str(self._vector[num][0]) +" | "+ str(self._vector[num][1]) + " |<br>"
         return s
 
 class NetworkState:
@@ -103,20 +105,20 @@ class NetworkState:
             switch = self._switches[switch]
             output += "Switch " + str(switch._num) + "'s vectors: \n"
             for num in switch._vector:
-                output += "Switch " + str(num) + " has a cost of " + str(switch._vector[num]) + "\n"
+                output += "Switch " + str(num) + " has a cost of " + str(switch._vector[num][0]) + " with next hop " +str(switch._vector[num][1])+"\n"
         output += "Sent vectors:\n"
         for num in self._sentvectors:
             output += "En route to " + str(num) + "\n"
             for vector in self._sentvectors[num]:
                 for num in vector:
-                    output += "Switch " + str(num) + " has a cost of " + str(vector[num]) + "\n"
+                    output += "Switch " + str(num) + " has a cost of " + str(vector[num][0]) + " with next hop " +str(vector[num][1])+"\n"
         output += "About to be received vectors:\n"
         for num in self._recvectors:
             output += "To be received by " + str(num) + "\n"
             for vectors in self._recvectors[num]:
                 for vector in vectors:
                     for num in vector:
-                        output += "Switch " + str(num) + " has a cost of " + str(vector[num]) + "\n"
+                        output += "Switch " + str(num) + " has a cost of " + str(vector[num][0]) + " with next hop " +str(vector[num][1])+ "\n"
         print(output)
 
 #below is all graphing related functions
@@ -181,9 +183,9 @@ def create_edge_trace(G,inflight_vectors):
 def sentvector_text(key,vectors):
         s = ""
         for vector in vectors:
-            s += "Vector traveling from Switch "+str(key[0])+" to Switch "+str(key[1])+"<br>| Sequence Number | Distance |<br>"
+            s += "Vector traveling from Switch "+str(key[1])+" to Switch "+str(key[0])+"<br>| Sequence Number | Distance | Next Hop |<br>"
             for num in vector:
-                s += "| "+ str(num) + " | " + str(vector[num]) + " |<br>"
+                s += "| "+ str(num) + " | " + str(vector[num][0]) + " | "+str(vector[num][1])+" |<br>"
         return s
 
 def create_node_trace(G):

@@ -1,15 +1,16 @@
 #!/usr/bin/python3
 
-from argparse import ArgumentParser #look at proj02 for help using this
+from argparse import ArgumentParser
 import os
 import sys
 import time
 import copy
+import math
 import random
 from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 import plotly.graph_objs as go
 import networkx as nx
-import math
+
 
 class Simulation:
     def __init__(self,settings):
@@ -290,6 +291,35 @@ def animate(f,edges,nodes):
     fig = go.Figure(data=[edges,edges,nodes,nodes],frames=f, layout=lay)
     plot(fig,filename='dvr_graph.html')
 
+def arg_checks(settings):
+    #run tests to make sure arguements match up
+    #returns True if passed or returns a error string if failed
+    num_switches = settings.switches
+    links = settings.links
+    delay = settings.delay
+    err = ""
+    if len(links) != num_switches:
+        err += "ERROR:\nNumber of switches and number of link specifications do not match\n"
+    if len(delay) != num_switches:
+        err += "ERROR:\nNumber of switches and number of delay specifications do not match\n"
+    if len(links) != len(delay):
+        err+= "ERROR:\nNumber of links and number of delay specifications do not match\n"
+
+    for i in range(len(links)):
+        link = links[i]
+        if i in link:
+            err+="ERROR:\nSwitch cannot have a link to itself\n"
+            err+= "Error found in link specification "+str(i)+"\n"
+
+    for num in delay:
+        if num < 0:
+            err+="ERROR:\nDelay cannot be negative\n"
+
+    if err != "":
+        return err
+    else:
+        return True
+
 def main():
     # Parse arguments
     arg_parser = ArgumentParser(description='Distance Vector routing simulator')
@@ -304,29 +334,32 @@ def main():
     settings = arg_parser.parse_args()
     settings.links = eval(settings.links)
     settings.delay = eval(settings.delay)
-    #issue here as lists don't seem to parse
-
-    # Create simulation
-    simulation = Simulation(settings)
-
-    #create frame list for animation later
-    frames = []
-
-    # Run simulation for specified number of steps
-    for t in range(settings.steps):
-        state = simulation.step(t)
-        #state.display()
-        G = create_graph(settings,state) #create a graph of the netork each time step
-        graph_frames = create_frame(G,state._sentvectors,t) #create a frame of the graph each time step
-        frames.append(graph_frames[0])
-        if t == 0:
-            nodes = graph_frames[1]
-            nodes['hoverinfo'] = 'skip'
-            edges = graph_frames[2]
-            edges['hoverinfo'] = 'skip'
 
 
-    animate(frames,edges,nodes)
+    if arg_checks(settings) == True:
+        # Create simulation
+        simulation = Simulation(settings)
+
+        #create frame list for animation later
+        frames = []
+
+        # Run simulation for specified number of steps
+        for t in range(settings.steps):
+            state = simulation.step(t)
+            #state.display()
+            G = create_graph(settings,state) #create a graph of the netork each time step
+            graph_frames = create_frame(G,state._sentvectors,t) #create a frame of the graph each time step
+            frames.append(graph_frames[0])
+            if t == 0: #set intial data so we dont have to redraw it
+                nodes = graph_frames[1]
+                nodes['hoverinfo'] = 'skip'
+                edges = graph_frames[2]
+                edges['hoverinfo'] = 'skip'
+
+
+        animate(frames,edges,nodes)
+    else:
+        print(arg_checks(settings))
 
 
 if __name__ == '__main__':

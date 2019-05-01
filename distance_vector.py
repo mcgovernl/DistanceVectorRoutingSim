@@ -128,8 +128,8 @@ def create_graph(settings,state):
     theta = ((2*math.pi)/r) #degree seperation between nodes
     G = nx.Graph()
     for num,switch in state._switches.items():
-        x= math.cos(num*theta)
-        y= math.sin(num*theta)
+        x= r*math.cos(num*theta)
+        y= r*math.sin(num*theta)
         G.add_node(switch, pos=(x ,y))
         for snum in switch._links:
             G.add_edge(switch,state._switches[snum])
@@ -236,7 +236,7 @@ def animate(f,edges,nodes):
                 titlefont=dict(size=16),
                 showlegend=False,
                 hovermode='closest',
-                margin=dict(b=5,l=5,r=5,t=5),
+                margin=dict(b=20,l=5,r=5,t=40),
                 annotations=[],
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),

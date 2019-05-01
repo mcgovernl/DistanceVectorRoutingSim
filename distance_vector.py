@@ -204,7 +204,7 @@ def create_node_trace(G):
         colorscale='YlGnBu',
         reversescale=True,
         color=[],
-        size=100,
+        size=75,
         colorbar=dict(
             thickness=15,
             title='Node Connections',
@@ -256,13 +256,13 @@ def animate(f,edges,nodes):
                                     }
                                 ],
                                 'direction': 'left',
-                                'pad': {'r': 10, 't': 87},
+                                'pad': {'r': 10, 'b': 50},
                                 'showactive': False,
                                 'type': 'buttons',
                                 'x': 0,
                                 'xanchor': 'right',
                                 'y': -0.1,
-                                'yanchor': 'top'
+                                'yanchor': 'bottom'
                             }])
     slider_dict = { #create slider dict
     'active': 0,
@@ -275,7 +275,7 @@ def animate(f,edges,nodes):
         'xanchor': 'left'
     },
     'transition': {'duration': 300, 'easing': 'cubic-in-out'},
-    'pad': {'b': 10, 't': 20},
+    'pad': {'b': 10, 't': 50},
     'len': 0.9,
     'x': 0,
     'y': -0.25,

@@ -296,12 +296,14 @@ def main():
     arg_parser.add_argument('--switches', dest='switches', action='store',
             type=int, default=7, help='Number of switches in network')
     arg_parser.add_argument('--links', dest='links', action='store',
-            type=list, default=[[1,2],[0,2,4],[0,1,3],[2,4,6],[1,3,5],[4,6],[3,5]], help='2D list of switch connections') #defaults
+            type=str, default="[1,2],[0,2,4],[0,1,3],[2,4,6],[1,3,5],[4,6],[3,5]" , help='2D list of switch connections') #defaults
     arg_parser.add_argument('--steps', dest='steps', action='store',
             type=int, default=10, help="How many time steps to simulate")
     arg_parser.add_argument('--delay', dest='delay', action='store',
-            type=list, default=[0,0,0,0,0,0,0], help="List of delay in sending for each switch")
+            type=str, default="[0,0,0,0,0,0,0]", help="List of delay in sending for each switch")
     settings = arg_parser.parse_args()
+    settings.links = eval(settings.links)
+    settings.delay = eval(settings.delay)
     #issue here as lists don't seem to parse
 
     # Create simulation

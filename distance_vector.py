@@ -260,13 +260,13 @@ def animate(f,edges,nodes):
                                 'showactive': False,
                                 'type': 'buttons',
                                 'x': 0,
-                                'xanchor': 'right',
+                                'xanchor': 'left',
                                 'y': -0.1,
-                                'yanchor': 'top'
+                                'yanchor': 'bottom'
                             }])
     slider_dict = { #create slider dict
     'active': 0,
-    'yanchor': 'top',
+    'yanchor': 'bottom',
     'xanchor': 'left',
     'currentvalue': {
         'font': {'size': 20},

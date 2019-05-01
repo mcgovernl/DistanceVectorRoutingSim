@@ -260,9 +260,9 @@ def animate(f,edges,nodes):
                                 'showactive': False,
                                 'type': 'buttons',
                                 'x': 0,
-                                'xanchor': 'left',
+                                'xanchor': 'right',
                                 'y': -0.1,
-                                'yanchor': 'bottom'
+                                'yanchor': 'top'
                             }])
     slider_dict = { #create slider dict
     'active': 0,
@@ -275,7 +275,7 @@ def animate(f,edges,nodes):
         'xanchor': 'left'
     },
     'transition': {'duration': 300, 'easing': 'cubic-in-out'},
-    'pad': {'b': 10, 't': 50},
+    'pad': {'b': 10, 't': 20},
     'len': 0.9,
     'x': 0,
     'y': -0.25,

@@ -236,7 +236,7 @@ def animate(f,edges,nodes):
                 titlefont=dict(size=16),
                 showlegend=False,
                 hovermode='closest',
-                margin=dict(b=20,l=5,r=5,t=40),
+                margin=dict(b=5,l=5,r=5,t=5),
                 annotations=[],
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
